@@ -133,39 +133,49 @@ static int cmd_info(char *args) {
 
 static int cmd_x(char *args) {
   if (args == NULL) {
-    printf("Usage: x N EXPR\n");
+    printf("Usage: x <num> <hex_addr>\n");
     return 0;
   }
 
-  char *N_str = strtok(args, " ");
-  char *EXPR_str = strtok(NULL, " ");
-
-  if (N_str == NULL || EXPR_str == NULL) {
-    printf("Error: invalid arguments. Usage: x N EXPR\n");
+  // 解析第一个参数（扫描数量）
+  char *num_str = strtok(args, " ");
+  char *addr_str = strtok(NULL, " ");
+  
+  if (num_str == NULL || addr_str == NULL) {
+    printf("Invalid command! Usage: x <num> <hex_addr>\n");
     return 0;
   }
 
-  int N = atoi(N_str);
-  if (N <= 0) {
-    printf("Error: N must be a positive integer.\n");
-    return 0;
-  }
+  int num = atoi(num_str);  // 转换扫描数量
+  int addr;
 
-  uint32_t addr;
-  if (sscanf(EXPR_str, "%x", &addr) != 1) {
-    printf("Error: invalid address format. Use hexadecimal (e.g. 0x100000).\n");
+  // 确保地址是合法的十六进制数
+  if (sscanf(addr_str, "%x", &addr) != 1) {
+    printf("Invalid address format! Use a hexadecimal number.\n");
     return 0;
   }
 
   printf("Memory content at 0x%08x:\n", addr);
-  for (int i = 0; i < N; i++) {
-    uint32_t data = *(uint32_t *)addr; 
-    printf("0x%08x:  0x%08x\n", addr, data);
-    addr += 4; 
+
+  // 逐行打印，每行最多 4 个 4-byte 值
+  for (int i = 0; i < num; i++) {
+    if (i % 4 == 0) {
+      printf("0x%08x: ", addr);
+    }
+
+    uint32_t data = vaddr_read(addr, 4);
+    printf("0x%08x ", data);
+
+    addr += 4;
+
+    if (i % 4 == 3 || i == num - 1) {
+      printf("\n");
+    }
   }
 
   return 0;
 }
+
 
 
 
