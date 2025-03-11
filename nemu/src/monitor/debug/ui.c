@@ -137,7 +137,6 @@ static int cmd_x(char *args) {
     return 0;
   }
 
-  // 解析第一个参数（扫描数量）
   char *num_str = strtok(args, " ");
   char *addr_str = strtok(NULL, " ");
   
@@ -146,10 +145,9 @@ static int cmd_x(char *args) {
     return 0;
   }
 
-  int num = atoi(num_str);  // 转换扫描数量
+  int num = atoi(num_str);  
   int addr;
 
-  // 确保地址是合法的十六进制数
   if (sscanf(addr_str, "%x", &addr) != 1) {
     printf("Invalid address format! Use a hexadecimal number.\n");
     return 0;
@@ -157,7 +155,6 @@ static int cmd_x(char *args) {
 
   printf("Memory content at 0x%08x:\n", addr);
 
-  // 逐行打印，每行最多 4 个 4-byte 值
   for (int i = 0; i < num; i++) {
     if (i % 4 == 0) {
       printf("0x%08x: ", addr);
