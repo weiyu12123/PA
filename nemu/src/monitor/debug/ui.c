@@ -37,6 +37,12 @@ static int cmd_q(char *args) {
 }
 
 static int cmd_help(char *args);
+static int cmd_si(char *);    
+static int cmd_info(char *);  
+//static int cmd_p(char *);     
+static int cmd_x(char *);     
+//static int cmd_w(char *);     
+//static int cmd_d(char *);     
 
 static struct {
   char *name;
@@ -46,7 +52,21 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  /* 单步执行 */
+  { "si",   "Single-step execution [N instructions] (default N=1)", cmd_si },
+  
+  /* 打印程序状态 */
+  { "info", "Print program state (r/w)", cmd_info },
+  
+  /* 表达式求值 */
+  //{ "p",    "Evaluate expression (e.g. p $eax+1)", cmd_p },
+  
+  /* 扫描内存 */
+  { "x",    "Examine memory (e.g. x 10 $esp)", cmd_x },
+  
+  /* 监视点操作 */
+  //{ "w",    "Set watchpoint (e.g. w *0x2000)", cmd_w },
+  //{ "d",    "Delete watchpoint (e.g. d 2)", cmd_d },
   /* TODO: Add more commands */
 
 };
@@ -75,6 +95,79 @@ static int cmd_help(char *args) {
   }
   return 0;
 }
+
+static int cmd_si(char *args) {
+  int n = 1;  // Default: execute 1 instruction
+  if (args != NULL) {
+    n = atoi(args);  // Convert argument to integer
+    if (n <= 0) {
+      printf("Error: the number of steps must be greater than 0.\n");
+      return 0;
+    }
+  }
+  cpu_exec(n);  // Call the CPU execution function with n steps
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  if (args == NULL) {
+    printf("Please input the info r or info w\n");
+  }
+  else {
+    if (strcmp(args, "r") == 0) {
+      printf("eax:  0x%-10x    %-10d\n", cpu.eax, cpu.eax);
+      printf("edx:  0x%-10x    %-10d\n", cpu.edx, cpu.edx);
+      printf("ecx:  0x%-10x    %-10d\n", cpu.ecx, cpu.ecx);
+      printf("ebx:  0x%-10x    %-10d\n", cpu.ebx, cpu.ebx);
+      printf("ebp:  0x%-10x    %-10d\n", cpu.ebp, cpu.ebp);
+      printf("esi:  0x%-10x    %-10d\n", cpu.esi, cpu.esi);
+      printf("esp:  0x%-10x    %-10d\n", cpu.esp, cpu.esp);
+      printf("eip:  0x%-10x    %-10d\n", cpu.eip, cpu.eip);
+    }
+    else {
+      printf("The info command need a parameter 'r' \n");
+    }
+  }
+  return 0;
+}
+
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  char *N_str = strtok(args, " ");
+  char *EXPR_str = strtok(NULL, " ");
+
+  if (N_str == NULL || EXPR_str == NULL) {
+    printf("Error: invalid arguments. Usage: x N EXPR\n");
+    return 0;
+  }
+
+  int N = atoi(N_str);
+  if (N <= 0) {
+    printf("Error: N must be a positive integer.\n");
+    return 0;
+  }
+
+  uint32_t addr;
+  if (sscanf(EXPR_str, "%x", &addr) != 1) {
+    printf("Error: invalid address format. Use hexadecimal (e.g. 0x100000).\n");
+    return 0;
+  }
+
+  printf("Memory content at 0x%08x:\n", addr);
+  for (int i = 0; i < N; i++) {
+    uint32_t data = *(uint32_t *)addr; 
+    printf("0x%08x:  0x%08x\n", addr, data);
+    addr += 4; 
+  }
+
+  return 0;
+}
+
+
 
 void ui_mainloop(int is_batch_mode) {
   if (is_batch_mode) {
