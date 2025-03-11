@@ -9,6 +9,7 @@
 
 void cpu_exec(uint64_t);
 
+void init_regex();
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 char* rl_gets() {
   static char *line_read = NULL;
@@ -174,9 +175,24 @@ static int cmd_x(char *args) {
 }
 
 static int cmd_p(char *args) {
-  
-  return 0;
+  if (args == NULL) {
+    printf("Input invalid command! Please input the expression.\n");
+  }
+  else {
+    init_regex();
 
+    bool success = true;
+    //printf("args = %s\n", args);
+    int result = expr(args, &success);
+
+    if (success) {
+      printf("result = %d\n", result);
+    }
+    else {
+      printf("Invalid expression!\n");
+    }
+  }
+  return 0;
 }
 
 
