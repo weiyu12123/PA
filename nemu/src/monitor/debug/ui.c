@@ -39,7 +39,7 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 static int cmd_si(char *);    
 static int cmd_info(char *);  
-//static int cmd_p(char *);     
+static int cmd_p(char *);     
 static int cmd_x(char *);     
 //static int cmd_w(char *);     
 //static int cmd_d(char *);     
@@ -59,7 +59,7 @@ static struct {
   { "info", "Print program state (r/w)", cmd_info },
   
   /* 表达式求值 */
-  //{ "p",    "Evaluate expression (e.g. p $eax+1)", cmd_p },
+  { "p",    "Evaluate expression (e.g. p $eax+1)", cmd_p },
   
   /* 扫描内存 */
   { "x",    "Examine memory (e.g. x 10 $esp)", cmd_x },
@@ -173,7 +173,11 @@ static int cmd_x(char *args) {
   return 0;
 }
 
+static int cmd_p(char *args) {
+  
+  return 0;
 
+}
 
 
 void ui_mainloop(int is_batch_mode) {
