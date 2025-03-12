@@ -103,22 +103,11 @@ static bool make_token(char *e) {
             }
             break;
 
-          case TK_PLUS:
-          case TK_MINUS:
-          case TK_MUL:
-          case TK_DIV:
-          case TK_LPAREN:
-          case TK_RPAREN:
-          case TK_EQ:
-            tokens[nr_token].str[0] = substr_start[0];  // 存储单字符运算符
+          default:
+            tokens[nr_token].str[0] = substr_start[0];
             tokens[nr_token].str[1] = '\0';
             break;
-
-          default:
-            printf("Unknown token type: %d\n", rules[i].token_type);
-            return false;
         }
-
         nr_token++;
         break;
       }
@@ -150,6 +139,18 @@ bool check_parentheses(int p, int q) {
     return (balance == 0);
 }
 
+int priority(int type) {
+    switch (type) {
+        case TK_NEG: return 2; // 一元负号优先级最高
+        case TK_MUL:
+        case TK_DIV: return 3;
+        case TK_PLUS:
+        case TK_MINUS: return 4;
+        case TK_EQ: return 7;
+        default: return 100;
+    }
+}
+
 /* 在 tokens[p...q] 中找到主运算符的位置.
  * 主运算符是优先级最低的运算符（不在括号内部的），如果存在多个，则选择最右边的一个。
  */
@@ -170,16 +171,9 @@ int find_main_operator(int p, int q) {
         }
         if (balance > 0) continue;
 
-        int priority = -1;
-        if (tokens[i].type == TK_PLUS || tokens[i].type == TK_MINUS)
-            priority = 1;
-        else if (tokens[i].type == TK_MUL || tokens[i].type == TK_DIV)
-            priority = 2;
-        else
-            continue;
-
-        if (priority <= min_priority) {
-            min_priority = priority;
+        int pri = priority(tokens[i].type);
+        if (pri <= min_priority) {
+            min_priority = pri;
             op = i;
         }
     }
@@ -196,7 +190,7 @@ int eval(int p, int q) {
         if (tokens[p].type == TK_NUM)
             return atoi(tokens[p].str);
     }
-    // 处理一元负号：如果 tokens[p] 是 TK_NEG，则只作用于其后面的表达式
+
     if (tokens[p].type == TK_NEG) {
         return -eval(p + 1, q);
     } else if (check_parentheses(p, q)) {
