@@ -160,76 +160,61 @@ int priority(int type) {
 // 查找主运算符
 int find_main_operator(int p, int q) {
     int op = -1;
-    int min_priority = 100;
+    int max_priority = -1;
     int balance = 0;
 
     for (int i = p; i <= q; i++) {
-        if (tokens[i].type == TK_LPAREN) {
-            balance++;
-            continue;
-        }
-        if (tokens[i].type == TK_RPAREN) {
-            balance--;
-            continue;
-        }
-        if (balance > 0) continue; // 括号内的内容不能当主运算符
+        if (tokens[i].type == TK_LPAREN) balance++;
+        else if (tokens[i].type == TK_RPAREN) balance--;
+        if (balance != 0) continue;
 
-        // 这里跳过 `TK_NEG`，因为它的优先级最高
-        if (tokens[i].type == TK_NEG) continue;
+        switch (tokens[i].type) {
+            case TK_NEG:
+            case TK_PLUS:
+            case TK_MINUS:
+            case TK_MUL:
+            case TK_DIV:
+            case TK_EQ:
+                break;
+            default:
+                continue;
+        }
 
         int cur_priority = priority(tokens[i].type);
-        if (cur_priority < min_priority || (cur_priority == min_priority && op < i)) { 
-            min_priority = cur_priority;
+        if (cur_priority > max_priority || (cur_priority == max_priority && i > op)) {
+            max_priority = cur_priority;
             op = i;
         }
     }
-
     return op;
 }
-
-
 
 
 /* 递归求值 tokens[p...q] 所表示的表达式.
  * 在这里，我们采用递归下降的方式，对表达式进行求值.
  */
 int eval(int p, int q) {
-    if (p > q) {
+    if (p > q) return 0;
+    if (p == q) {
+        if (tokens[p].type == TK_NUM) return atoi(tokens[p].str);
         assert(0);
-    } else if (p == q) {
-        if (tokens[p].type == TK_NUM) {
-            return atoi(tokens[p].str);
-        }
     }
+    if (check_parentheses(p, q)) return eval(p + 1, q - 1);
 
-    if (check_parentheses(p, q)) {
-        return eval(p + 1, q - 1);
-    }
-
-    // 处理一元负号
-    if (tokens[p].type == TK_NEG) {
-        assert(p + 1 <= q); // 确保 `-` 后面有数字
-        int val = eval(p + 1, q); // **只对下一个数取负**
-        return -val;  // **返回 `-1`，然后继续参与后续计算**
-    }
-
+    if (tokens[p].type == TK_NEG) return -eval(p + 1, q);
 
     int op = find_main_operator(p, q);
-    if (op == -1) {
-        printf("Error: No valid operator found in expression\n");
-        assert(0);
-    }
+    if (op == -1) return 0;
 
     int val1 = eval(p, op - 1);
     int val2 = eval(op + 1, q);
 
     switch (tokens[op].type) {
-        case TK_PLUS:  return val1 + val2;
+        case TK_PLUS: return val1 + val2;
         case TK_MINUS: return val1 - val2;
-        case TK_MUL:   return val1 * val2;
-        case TK_DIV:   
-            assert(val2 != 0);
-            return val1 / val2;
+        case TK_MUL: return val1 * val2;
+        case TK_DIV: return val2 != 0 ? val1 / val2 : 0;
+        case TK_EQ: return val1 == val2;
         default: assert(0);
     }
     return 0;
@@ -238,15 +223,9 @@ int eval(int p, int q) {
 
 void convert_minus_to_neg() {
     for (int i = 0; i < nr_token; i++) {
-        if (tokens[i].type == TK_MINUS) {
-            // 负号（单目运算符）的条件：
-            // 1. 是第一个 token（即 `-1 + 3` 这种情况）
-            // 2. 前一个 token 不是数字（TK_NUM）、右括号（TK_RPAREN），即 `(-1 + 3)` 或 `* -3` 这种情况
-            if (i == 0 || 
-                (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
-                tokens[i].type = TK_NEG;
-                printf("Converted - at position %d to TK_NEG\n", i); // 调试信息
-            }
+        if (tokens[i].type == TK_MINUS && 
+            (i == 0 || (tokens[i-1].type != TK_NUM && tokens[i-1].type != TK_RPAREN))) {
+            tokens[i].type = TK_NEG;
         }
     }
 }
