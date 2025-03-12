@@ -27,9 +27,9 @@ static struct rule {
   {" +", TK_NOTYPE},    // spaces
   {"\\+", TK_PLUS},         // plus
   {"==", TK_EQ},         // equal
-  {"-", TK_MINUS},         // 减号
+  {"\\-", TK_MINUS},         // 减号
   {"\\*", TK_MUL},         // 乘号
-  {"/", TK_DIV},           // 除号
+  {"\\/", TK_DIV},           // 除号
   {"\\(", TK_LPAREN},      // 左括号
   {"\\)", TK_RPAREN},      // 右括号
   {"[0-9]+", TK_NUM}       // 数字
