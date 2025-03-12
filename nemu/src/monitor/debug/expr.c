@@ -173,16 +173,16 @@ int find_main_operator(int p, int q) {
             continue;
         }
         if (balance > 0) continue; // 括号内的内容不能当主运算符
-        if (tokens[i].type == TK_NEG) continue; // **跳过一元负号**
 
         int cur_priority = priority(tokens[i].type);
-        if (cur_priority <= min_priority) { 
+        if (cur_priority < min_priority || (cur_priority == min_priority && op < i)) { 
             min_priority = cur_priority;
             op = i;
         }
     }
     return op;
 }
+
 
 
 /* 递归求值 tokens[p...q] 所表示的表达式.
@@ -196,18 +196,15 @@ int eval(int p, int q) {
             return atoi(tokens[p].str);
         }
     }
-    
+
     if (check_parentheses(p, q)) {
         return eval(p + 1, q - 1);
     }
 
-    // 修正 `TK_NEG` 的处理
+    // 处理一元负号
     if (tokens[p].type == TK_NEG) {
-        assert(p + 1 <= q);  // 确保 `-` 后面有东西
-        int right_val = eval(p + 1, p + 1);  // **只对 `p+1` 取负**
-        return -right_val;  
+        return -eval(p + 1, q);
     }
-
 
     int op = find_main_operator(p, q);
     if (op == -1) {
@@ -222,7 +219,7 @@ int eval(int p, int q) {
         case TK_PLUS:  return val1 + val2;
         case TK_MINUS: return val1 - val2;
         case TK_MUL:   return val1 * val2;
-        case TK_DIV: 
+        case TK_DIV:   
             assert(val2 != 0);
             return val1 / val2;
         default: assert(0);
@@ -230,10 +227,15 @@ int eval(int p, int q) {
     return 0;
 }
 
+
 void convert_minus_to_neg() {
     for (int i = 0; i < nr_token; i++) {
         if (tokens[i].type == TK_MINUS) {
-            if (i == 0 || (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
+            // 负号（单目运算符）的条件：
+            // 1. 是第一个 token（即 `-1 + 3` 这种情况）
+            // 2. 前一个 token 不是数字（TK_NUM）、右括号（TK_RPAREN），即 `(-1 + 3)` 或 `* -3` 这种情况
+            if (i == 0 || 
+                (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
                 tokens[i].type = TK_NEG;
                 printf("Converted - at position %d to TK_NEG\n", i); // 调试信息
             }
