@@ -25,7 +25,7 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
+  {"\\+", TK_PLUS},         // plus
   {"==", TK_EQ},         // equal
   {"-", TK_MINUS},         // 减号
   {"\\*", TK_MUL},         // 乘号
