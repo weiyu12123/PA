@@ -141,15 +141,16 @@ bool check_parentheses(int p, int q) {
 
 int priority(int type) {
     switch (type) {
-        case TK_NEG: return 2; // 一元负号优先级最高
+        case TK_NEG: return 1;  // **一元负号最高**
         case TK_MUL:
-        case TK_DIV: return 3;
+        case TK_DIV: return 2;  // **乘除优先级比加减高**
         case TK_PLUS:
-        case TK_MINUS: return 4;
-        case TK_EQ: return 7;
-        default: return 100;
+        case TK_MINUS: return 3;
+        case TK_EQ: return 7;  // **比较运算符最低**
+        default: return 100;  // **未知类型默认最低优先级**
     }
 }
+
 
 /* 在 tokens[p...q] 中找到主运算符的位置.
  * 主运算符是优先级最低的运算符（不在括号内部的），如果存在多个，则选择最右边的一个。
@@ -169,11 +170,11 @@ int find_main_operator(int p, int q) {
             balance--;
             continue;
         }
-        if (balance > 0) continue;
+        if (balance > 0) continue; // 括号内的内容不能当主运算符
 
-        int pri = priority(tokens[i].type);
-        if (pri <= min_priority) {
-            min_priority = pri;
+        int cur_priority = priority(tokens[i].type); // 这里调用 priority()
+        if (cur_priority <= min_priority) { 
+            min_priority = cur_priority;
             op = i;
         }
     }
@@ -190,27 +191,37 @@ int eval(int p, int q) {
         if (tokens[p].type == TK_NUM)
             return atoi(tokens[p].str);
     }
-
+    
     if (tokens[p].type == TK_NEG) {
+        assert(p + 1 <= q); // 确保后面还有表达式
         return -eval(p + 1, q);
-    } else if (check_parentheses(p, q)) {
+    } 
+    
+    if (check_parentheses(p, q)) {
         return eval(p + 1, q - 1);
-    } else {
-        int op = find_main_operator(p, q);
-        int val1 = eval(p, op - 1);
-        int val2 = eval(op + 1, q);
-        switch (tokens[op].type) {
-            case TK_PLUS:  return val1 + val2;
-            case TK_MINUS: return val1 - val2;
-            case TK_MUL:   return val1 * val2;
-            case TK_DIV: 
-                assert(val2 != 0);
-                return val1 / val2;
-            default: assert(0);
-        }
+    } 
+
+    int op = find_main_operator(p, q);
+    if (op == -1) {
+        printf("Error: No valid operator found in expression\n");
+        assert(0);
+    }
+
+    int val1 = eval(p, op - 1);
+    int val2 = eval(op + 1, q);
+
+    switch (tokens[op].type) {
+        case TK_PLUS:  return val1 + val2;
+        case TK_MINUS: return val1 - val2;
+        case TK_MUL:   return val1 * val2;
+        case TK_DIV: 
+            assert(val2 != 0);
+            return val1 / val2;
+        default: assert(0);
     }
     return 0;
 }
+
 
 
 void convert_minus_to_neg() {
