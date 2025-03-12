@@ -141,15 +141,17 @@ bool check_parentheses(int p, int q) {
 
 int priority(int type) {
     switch (type) {
-        case TK_NEG: return 1;  // **一元负号最高**
+        case TK_NEG: return 0;  // **一元负号最优先**
         case TK_MUL:
-        case TK_DIV: return 2;  // **乘除优先级比加减高**
+        case TK_DIV: return 2;  
         case TK_PLUS:
         case TK_MINUS: return 3;
-        case TK_EQ: return 7;  // **比较运算符最低**
-        default: return 100;  // **未知类型默认最低优先级**
+        case TK_EQ: return 7;  
+        default: return 100;
     }
 }
+
+
 
 
 /* 在 tokens[p...q] 中找到主运算符的位置.
@@ -171,8 +173,9 @@ int find_main_operator(int p, int q) {
             continue;
         }
         if (balance > 0) continue; // 括号内的内容不能当主运算符
+        if (tokens[i].type == TK_NEG) continue; // **跳过一元负号**
 
-        int cur_priority = priority(tokens[i].type); // 这里调用 priority()
+        int cur_priority = priority(tokens[i].type);
         if (cur_priority <= min_priority) { 
             min_priority = cur_priority;
             op = i;
@@ -180,6 +183,7 @@ int find_main_operator(int p, int q) {
     }
     return op;
 }
+
 
 /* 递归求值 tokens[p...q] 所表示的表达式.
  * 在这里，我们采用递归下降的方式，对表达式进行求值.
@@ -192,13 +196,13 @@ int eval(int p, int q) {
             return atoi(tokens[p].str);
     }
     
-    if (tokens[p].type == TK_NEG) {
-        assert(p + 1 <= q); // 确保后面还有表达式
-        return -eval(p + 1, q);
-    } 
-    
     if (check_parentheses(p, q)) {
         return eval(p + 1, q - 1);
+    }
+
+    if (tokens[p].type == TK_NEG) {  // **这里放到括号检查之后**
+        assert(p + 1 <= q); // 确保后面还有表达式
+        return -eval(p + 1, q);
     } 
 
     int op = find_main_operator(p, q);
@@ -224,18 +228,18 @@ int eval(int p, int q) {
 
 
 
+
 void convert_minus_to_neg() {
     for (int i = 0; i < nr_token; i++) {
         if (tokens[i].type == TK_MINUS) {
-            // 如果 '-' 在表达式开始，或者前一个 token 不是数字和右括号，则为一元负号
-            if (i == 0 ||
-                (tokens[i - 1].type != TK_NUM &&
-                 tokens[i - 1].type != TK_RPAREN)) {
+            if (i == 0 || (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
                 tokens[i].type = TK_NEG;
+                printf("Converted - at position %d to TK_NEG\n", i); // 调试信息
             }
         }
     }
 }
+
 
 /* 对输入的表达式字符串 e 进行求值.
  * 如果表达式合法，则返回计算结果，同时通过 success 返回 true;
