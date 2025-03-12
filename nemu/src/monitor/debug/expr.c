@@ -203,7 +203,7 @@ int eval(int p, int q) {
 
     // 处理一元负号
     if (tokens[p].type == TK_NEG) {
-        return -eval(p + 1, q);
+        return -eval(p + 1, find_main_operator(p + 1, q) - 1);
     }
 
     int op = find_main_operator(p, q);
