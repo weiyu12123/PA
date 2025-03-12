@@ -203,9 +203,11 @@ int eval(int p, int q) {
 
     // 修正 `TK_NEG` 的处理
     if (tokens[p].type == TK_NEG) {
-        assert(p + 1 <= q); // 确保 `-` 后面有东西
-        return -eval(p + 1, q);  // 取负，但不只限于 `TK_NUM`
+        assert(p + 1 <= q);  // 确保 `-` 后面有东西
+        int right_val = eval(p + 1, p + 1);  // **只对 `p+1` 取负**
+        return -right_val;  
     }
+
 
     int op = find_main_operator(p, q);
     if (op == -1) {
@@ -227,10 +229,6 @@ int eval(int p, int q) {
     }
     return 0;
 }
-
-
-
-
 
 void convert_minus_to_neg() {
     for (int i = 0; i < nr_token; i++) {
