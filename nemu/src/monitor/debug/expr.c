@@ -9,7 +9,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_PLUS, TK_MINUS, TK_MUL, TK_DIV,
-  TK_LPAREN, TK_RPAREN
+  TK_LPAREN, TK_RPAREN,TK_NEG
 
   /* TODO: Add more token types */
 
@@ -32,7 +32,7 @@ static struct rule {
   {"\\/", TK_DIV},           // 除号
   {"\\(", TK_LPAREN},      // 左括号
   {"\\)", TK_RPAREN},      // 右括号
-  {"[0-9]+", TK_NUM}       // 数字
+  {"[0-9]+", TK_NUM},       // 数字
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -195,22 +195,41 @@ int eval(int p, int q) {
     } else if (p == q) {
         if (tokens[p].type == TK_NUM)
             return atoi(tokens[p].str);
+    }
+    // 处理一元负号：如果 tokens[p] 是 TK_NEG，则只作用于其后面的表达式
+    if (tokens[p].type == TK_NEG) {
+        return -eval(p + 1, q);
     } else if (check_parentheses(p, q)) {
         return eval(p + 1, q - 1);
     } else {
         int op = find_main_operator(p, q);
         int val1 = eval(p, op - 1);
         int val2 = eval(op + 1, q);
-
         switch (tokens[op].type) {
-            case TK_PLUS: return val1 + val2;
+            case TK_PLUS:  return val1 + val2;
             case TK_MINUS: return val1 - val2;
-            case TK_MUL: return val1 * val2;
-            case TK_DIV: return val1 / val2;
+            case TK_MUL:   return val1 * val2;
+            case TK_DIV: 
+                assert(val2 != 0);
+                return val1 / val2;
             default: assert(0);
         }
     }
     return 0;
+}
+
+
+void convert_minus_to_neg() {
+    for (int i = 0; i < nr_token; i++) {
+        if (tokens[i].type == TK_MINUS) {
+            // 如果 '-' 在表达式开始，或者前一个 token 不是数字和右括号，则为一元负号
+            if (i == 0 ||
+                (tokens[i - 1].type != TK_NUM &&
+                 tokens[i - 1].type != TK_RPAREN)) {
+                tokens[i].type = TK_NEG;
+            }
+        }
+    }
 }
 
 /* 对输入的表达式字符串 e 进行求值.
@@ -225,6 +244,7 @@ uint32_t expr(char *e, bool *success) {
         *success = false;
         return 0;
     }
+    convert_minus_to_neg();
     *success = true;
     return eval(0, nr_token - 1);
 }
