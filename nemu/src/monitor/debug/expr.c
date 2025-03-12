@@ -9,7 +9,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_PLUS, TK_MINUS, TK_MUL, TK_DIV,
-  TK_LPAREN, TK_RPAREN,TK_NEG
+  TK_LPAREN, TK_RPAREN,TK_NEG,TK_HEX,TK_REG,TK_NEQ,TK_AND,TK_OR,TK_NOT,TK_DEREF
 
   /* TODO: Add more token types */
 
@@ -33,6 +33,13 @@ static struct rule {
   {"\\(", TK_LPAREN},      // 左括号
   {"\\)", TK_RPAREN},      // 右括号
   {"[0-9]+", TK_NUM},       // 数字
+  {"!=", TK_NEQ},           // 不等
+  {"&&", TK_AND},           // 逻辑与
+  {"\\|\\|", TK_OR},        // 逻辑或
+  {"!", TK_NOT},            // 逻辑非
+  {"\\*", TK_DEREF},        // 解引用操作符
+  {"0[xX][0-9a-fA-F]+", TK_HEX}, // 十六进制数
+  {"[a-zA-Z_][a-zA-Z0-9_]*", TK_REG} //寄存器
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -94,6 +101,7 @@ static bool make_token(char *e) {
 
         switch (rules[i].token_type) {
           case TK_NUM:
+          case TK_HEX:
             if (substr_len < 32) {
               strncpy(tokens[nr_token].str, substr_start, substr_len);
               tokens[nr_token].str[substr_len] = '\0';
@@ -113,6 +121,7 @@ static bool make_token(char *e) {
       }
     }
 
+
     if (i == NR_REGEX) {
       printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
       return false;
@@ -129,7 +138,7 @@ static bool make_token(char *e) {
 bool check_parentheses(int p, int q) {
     if (tokens[p].type != TK_LPAREN || tokens[q].type != TK_RPAREN)
         return false;
-    
+
     int balance = 0;
     for (int i = p; i <= q; i++) {
         if (tokens[i].type == TK_LPAREN) balance++;
@@ -141,16 +150,28 @@ bool check_parentheses(int p, int q) {
 
 int priority(int type) {
     switch (type) {
-        case TK_NEG: return 0;  // **一元负号最优先**
+        case TK_NEG:  // 一元负号
+        case TK_NOT:  // 逻辑非
+            return 0;  // 最高优先级
         case TK_MUL:
-        case TK_DIV: return 2;  
+        case TK_DIV:  // 乘法和除法
+            return 2;  
         case TK_PLUS:
-        case TK_MINUS: return 3;
-        case TK_EQ: return 7;  
-        default: return 100;
+        case TK_MINUS:  // 加法和减法
+            return 3;
+        case TK_EQ:
+        case TK_NEQ:  // 相等和不等
+            return 6;
+        case TK_AND:  // 逻辑与
+            return 7;
+        case TK_OR:  // 逻辑或
+            return 8;
+        case TK_DEREF:  // 解引用
+            return 1;  // 次高优先级，通常解引用优先于加减乘除
+        default:
+            return 100;  // 默认优先级，表示没有有效运算符
     }
 }
-
 
 
 
@@ -168,58 +189,88 @@ int find_main_operator(int p, int q) {
         else if (tokens[i].type == TK_RPAREN) balance--;
         if (balance != 0) continue;
 
+        // 确保只选择一元操作符（如负号、逻辑非）和二元操作符
         switch (tokens[i].type) {
-            case TK_NEG:
+            case TK_NEG:  // 一元负号
+            case TK_NOT:  // 逻辑非
             case TK_PLUS:
             case TK_MINUS:
             case TK_MUL:
             case TK_DIV:
             case TK_EQ:
+            case TK_NEQ:
+            case TK_AND:
+            case TK_OR:
+            case TK_DEREF:  // 解引用
                 break;
             default:
                 continue;
         }
 
         int cur_priority = priority(tokens[i].type);
+        // 如果当前运算符优先级更低，或优先级相同但位置更右，则更新主运算符
         if (cur_priority > max_priority || (cur_priority == max_priority && i > op)) {
             max_priority = cur_priority;
             op = i;
         }
     }
+
     return op;
 }
+
 
 
 /* 递归求值 tokens[p...q] 所表示的表达式.
  * 在这里，我们采用递归下降的方式，对表达式进行求值.
  */
 int eval(int p, int q) {
-    if (p > q) return 0;
-    if (p == q) {
-        if (tokens[p].type == TK_NUM) return atoi(tokens[p].str);
+    if (p > q) {
+        assert(0);
+    } else if (p == q) {
+        if (tokens[p].type == TK_NUM) {
+            return atoi(tokens[p].str);
+        } else if (tokens[p].type == TK_HEX) {
+            return strtol(tokens[p].str, NULL, 16);  // Parse hexadecimal number
+        }
+    }
+
+    if (check_parentheses(p, q)) {
+        return eval(p + 1, q - 1);
+    }
+
+    if (tokens[p].type == TK_NOT || tokens[p].type == TK_DEREF) {
+        assert(p + 1 <= q);
+        int val = eval(p + 1, q);  // 递归计算下一个表达式
+        if (tokens[p].type == TK_NOT) {
+            return !val;  // 逻辑非
+        }
+        // 这里移除解引用操作，因为暂时不实现指针解引用
+        return val;  // 直接返回计算结果，而不是尝试解引用
+    }
+
+    // Find the main operator
+    int op = find_main_operator(p, q);
+    if (op == -1) {
+        printf("Error: No valid operator found in expression\n");
         assert(0);
     }
-    if (check_parentheses(p, q)) return eval(p + 1, q - 1);
-
-    if (tokens[p].type == TK_NEG) return -eval(p + 1, q);
-
-    int op = find_main_operator(p, q);
-    if (op == -1) return 0;
 
     int val1 = eval(p, op - 1);
     int val2 = eval(op + 1, q);
 
     switch (tokens[op].type) {
-        case TK_PLUS: return val1 + val2;
-        case TK_MINUS: return val1 - val2;
-        case TK_MUL: return val1 * val2;
-        case TK_DIV: return val2 != 0 ? val1 / val2 : 0;
-        case TK_EQ: return val1 == val2;
-        default: assert(0);
+        case TK_PLUS:   return val1 + val2;
+        case TK_MINUS:  return val1 - val2;
+        case TK_MUL:    return val1 * val2;
+        case TK_DIV:    assert(val2 != 0); return val1 / val2;
+        case TK_EQ:     return val1 == val2;
+        case TK_NEQ:    return val1 != val2;
+        case TK_AND:    return val1 && val2;
+        case TK_OR:     return val1 || val2;
+        default:        assert(0);  // Shouldn't reach here
     }
     return 0;
 }
-
 
 void convert_minus_to_neg() {
     for (int i = 0; i < nr_token; i++) {
