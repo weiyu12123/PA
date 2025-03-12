@@ -174,14 +174,19 @@ int find_main_operator(int p, int q) {
         }
         if (balance > 0) continue; // 括号内的内容不能当主运算符
 
+        // 这里跳过 `TK_NEG`，因为它的优先级最高
+        if (tokens[i].type == TK_NEG) continue;
+
         int cur_priority = priority(tokens[i].type);
         if (cur_priority < min_priority || (cur_priority == min_priority && op < i)) { 
             min_priority = cur_priority;
             op = i;
         }
     }
+
     return op;
 }
+
 
 
 
@@ -203,8 +208,11 @@ int eval(int p, int q) {
 
     // 处理一元负号
     if (tokens[p].type == TK_NEG) {
-        return -eval(p + 1, find_main_operator(p + 1, q) - 1);
+        assert(p + 1 <= q); // 确保 `-` 后面有数字
+        int val = eval(p + 1, q); // **只对下一个数取负**
+        return -val;  // **返回 `-1`，然后继续参与后续计算**
     }
+
 
     int op = find_main_operator(p, q);
     if (op == -1) {
