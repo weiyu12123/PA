@@ -192,23 +192,20 @@ int eval(int p, int q) {
     if (p > q) {
         assert(0);
     } else if (p == q) {
-        if (tokens[p].type == TK_NUM)
+        if (tokens[p].type == TK_NUM) {
             return atoi(tokens[p].str);
+        }
     }
     
     if (check_parentheses(p, q)) {
         return eval(p + 1, q - 1);
     }
 
+    // 修正 `TK_NEG` 的处理
     if (tokens[p].type == TK_NEG) {
         assert(p + 1 <= q); // 确保 `-` 后面有东西
-        if (tokens[p + 1].type == TK_NUM) {
-            return -atoi(tokens[p + 1].str); // 直接取负
-        } else {
-            return -eval(p + 1, q); // 递归计算
-        }
+        return -eval(p + 1, q);  // 取负，但不只限于 `TK_NUM`
     }
-
 
     int op = find_main_operator(p, q);
     if (op == -1) {
@@ -230,6 +227,7 @@ int eval(int p, int q) {
     }
     return 0;
 }
+
 
 
 
