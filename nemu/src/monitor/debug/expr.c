@@ -32,13 +32,13 @@ static struct rule {
   {"\\/", TK_DIV},           // 除号
   {"\\(", TK_LPAREN},      // 左括号
   {"\\)", TK_RPAREN},      // 右括号
+  {"0x[1-9A-Fa-f][0-9A-Fa-f]*",TK_HEX}, // 十六进制数
   {"[0-9]+", TK_NUM},       // 数字
   {"!=", TK_NEQ},           // 不等
   {"&&", TK_AND},           // 逻辑与
   {"\\|\\|", TK_OR},        // 逻辑或
   {"!", TK_NOT},            // 逻辑非
   {"\\*", TK_DEREF},        // 解引用操作符
-  {"0x[0-9a-fA-F]+", TK_HEX}, // 十六进制数
   {"\\$((eax|ecx|edx|ebx|esp|ebp|esi|edi|eip|ax|cx|dx|bx|sp|bp|si|di|al|cl|dl|bl|ah|ch|dh|bh))",TK_REG}, //寄存器
 };
 
