@@ -72,64 +72,57 @@ Token tokens[32];
 int nr_token;
 
 static bool make_token(char *e) {
-  int position = 0;
-  int i;
-  regmatch_t pmatch;
+    int position = 0;
+    int i;
+    regmatch_t pmatch;
 
-  nr_token = 0;
+    nr_token = 0;
 
-  while (e[position] != '\0') {
-    /* Try all rules one by one. */
-    for (i = 0; i < NR_REGEX; i ++) {
-      if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
-        char *substr_start = e + position;
-        int substr_len = pmatch.rm_eo;
+    while (e[position] != '\0') {
+        /* Try all rules one by one. */
+        for (i = 0; i < NR_REGEX; i++) {
+            if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
+                char *substr_start = e + position;
+                int substr_len = pmatch.rm_eo;
 
-        //Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-        //    i, rules[i].regex, position, substr_len, substr_len, substr_start);
-        position += substr_len;
+                position += substr_len;
 
-        if (rules[i].token_type == TK_NOTYPE) break;  // 忽略空格
-        assert(nr_token < 32);
+                if (rules[i].token_type == TK_NOTYPE) break;  // 忽略空格
+                assert(nr_token < 32);
 
-        tokens[nr_token].type = rules[i].token_type;
+                tokens[nr_token].type = rules[i].token_type;
 
-        /* TODO: Now a new token is recognized with rules[i]. Add codes
-         * to record the token in the array `tokens'. For certain types
-         * of tokens, some extra actions should be performed.
-         */
-
-        switch (rules[i].token_type) {
-          case TK_NUM:
-          case TK_HEX:
-            if (substr_len < 32) {
-              strncpy(tokens[nr_token].str, substr_start, substr_len);
-              tokens[nr_token].str[substr_len] = '\0';
-            } else {
-              printf("Error: Number token too long\n");
-              return false;
+                switch (rules[i].token_type) {
+                    case TK_NUM:
+                    case TK_HEX:
+                    case TK_REG:
+                        if (substr_len < sizeof(tokens[nr_token].str)) {
+                            strncpy(tokens[nr_token].str, substr_start, substr_len);
+                            tokens[nr_token].str[substr_len] = '\0';
+                        } else {
+                            printf("Error: Number token too long\n");
+                            return false;
+                        }
+                        break;
+                    default:
+                        tokens[nr_token].str[0] = substr_start[0];
+                        tokens[nr_token].str[1] = '\0';
+                        break;
+                }
+                nr_token++;
+                break;
             }
-            break;
-
-          default:
-            tokens[nr_token].str[0] = substr_start[0];
-            tokens[nr_token].str[1] = '\0';
-            break;
         }
-        nr_token++;
-        break;
-      }
+
+        if (i == NR_REGEX) {
+            printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
+            return false;
+        }
     }
 
-
-    if (i == NR_REGEX) {
-      printf("no match at position %d\n%s\n%*.s^\n", position, e, position, "");
-      return false;
-    }
-  }
-
-  return true;
+    return true;
 }
+
 
 /* 检查 tokens[p...q] 是否被一对匹配的括号包围.
  * 如果整个子表达式以一个左括号开始、以一个右括号结束，并且这对括号确实匹配，则返回 true.
@@ -227,59 +220,86 @@ int eval(int p, int q) {
     if (p > q) {
         assert(0);
     } else if (p == q) {
-        if (tokens[p].type == TK_NUM) {
-            return atoi(tokens[p].str);
-        } else if (tokens[p].type == TK_HEX) {
-            return strtol(tokens[p].str, NULL, 16);  // Parse hexadecimal number
+        int num;
+        switch (tokens[p].type) {
+            case TK_NUM:
+                sscanf(tokens[p].str, "%d", &num);
+                return num;
+            case TK_HEX:
+                sscanf(tokens[p].str, "%x", &num);
+                return num;
+            case TK_REG:
+                for (int i = 0; i < 8; i++) {
+                    if (strcmp(tokens[p].str, regsl[i]) == 0)
+                        return reg_l(i);
+                    if (strcmp(tokens[p].str, regsw[i]) == 0)
+                        return reg_w(i);
+                    if (strcmp(tokens[p].str, regsb[i]) == 0)
+                        return reg_b(i);
+                }
+                if (strcmp(tokens[p].str, "eip") == 0)
+                    return cpu.eip;
+                else {
+                    printf("error in TK_REG in eval()\n");
+                    assert(0);
+                }
         }
     }
+    if (p < q) {
+      if (check_parentheses(p, q)) {
+          return eval(p + 1, q - 1);
+      }else{
+          int op = find_main_operator(p, q);
+          vaddr_t addr;
+          int result;
 
-    if (check_parentheses(p, q)) {
-        return eval(p + 1, q - 1);
-    }
+          switch (tokens[op].type) {
+              case TK_NEG:
+                  return -eval(p + 1, q);
+              case TK_DEREF:
+                  addr = eval(p + 1, q);
+                  result = vaddr_read(addr, 4);
+                  printf("addr=%u(0x%x) ---> value=%d(0x%08x)\n", addr, addr, result, result);
+                  return result;
+              case '!':
+                  result = eval(p + 1, q);
+                  return result != 0 ? 0 : 1;
+          }
 
-    if (tokens[p].type == TK_NOT || tokens[p].type == TK_DEREF) {
-        assert(p + 1 <= q);
-        int val = eval(p + 1, q);  // 递归计算下一个表达式
-        if (tokens[p].type == TK_NOT) {
-            return !val;  // 逻辑非
-        }
-        // 这里移除解引用操作，因为暂时不实现指针解引用
-        return val;  // 直接返回计算结果，而不是尝试解引用
-    }
+          int val1 = eval(p, op - 1);
+          int val2 = eval(op + 1, q);
 
-    // Find the main operator
-    int op = find_main_operator(p, q);
-    if (op == -1) {
-        printf("Error: No valid operator found in expression\n");
-        assert(0);
-    }
-
-    int val1 = eval(p, op - 1);
-    int val2 = eval(op + 1, q);
-
-    switch (tokens[op].type) {
-        case TK_PLUS:   return val1 + val2;
-        case TK_MINUS:  return val1 - val2;
-        case TK_MUL:    return val1 * val2;
-        case TK_DIV:    assert(val2 != 0); return val1 / val2;
-        case TK_EQ:     return val1 == val2;
-        case TK_NEQ:    return val1 != val2;
-        case TK_AND:    return val1 && val2;
-        case TK_OR:     return val1 || val2;
-        default:        assert(0);  // Shouldn't reach here
+          switch (tokens[op].type) {
+              case TK_PLUS:   return val1 + val2;
+              case TK_MINUS:  return val1 - val2;
+              case TK_MUL:    return val1 * val2;
+              case TK_DIV:    assert(val2 != 0); return val1 / val2;
+              case TK_EQ:     return val1 == val2;
+              case TK_NEQ:    return val1 != val2;
+              case TK_AND:    return val1 && val2;
+              case TK_OR:     return val1 || val2;
+              default:        assert(0);  // Shouldn't reach here
+          }
+      }
     }
     return 0;
 }
 
-void convert_minus_to_neg() {
+void convert_minus_and_deref() {
     for (int i = 0; i < nr_token; i++) {
-        if (tokens[i].type == TK_MINUS && 
-            (i == 0 || (tokens[i-1].type != TK_NUM && tokens[i-1].type != TK_RPAREN))) {
-            tokens[i].type = TK_NEG;
+        if (tokens[i].type == TK_MINUS) {
+            if (i == 0 || (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
+                tokens[i].type = TK_NEG;
+            }
+        }
+        if (tokens[i].type == TK_MUL) {
+            if (i == 0 || (tokens[i - 1].type != TK_NUM && tokens[i - 1].type != TK_RPAREN)) {
+                tokens[i].type = TK_DEREF;
+            }
         }
     }
 }
+
 
 
 /* 对输入的表达式字符串 e 进行求值.
@@ -294,7 +314,13 @@ uint32_t expr(char *e, bool *success) {
         *success = false;
         return 0;
     }
-    convert_minus_to_neg();
+
+    // 处理 `-` 和 `*`
+    if (tokens[0].type == TK_MINUS) tokens[0].type = TK_NEG;
+    if (tokens[0].type == TK_MUL) tokens[0].type = TK_DEREF;
+
+    convert_minus_and_deref();
+
     *success = true;
     return eval(0, nr_token - 1);
 }
