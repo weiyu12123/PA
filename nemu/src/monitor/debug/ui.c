@@ -42,8 +42,8 @@ static int cmd_si(char *);
 static int cmd_info(char *);  
 static int cmd_p(char *);     
 static int cmd_x(char *);     
-//static int cmd_w(char *);     
-//static int cmd_d(char *);     
+static int cmd_w(char *);     
+static int cmd_d(char *);     
 
 static struct {
   char *name;
@@ -66,8 +66,8 @@ static struct {
   { "x",    "Examine memory (e.g. x 10 $esp)", cmd_x },
   
   /* 监视点操作 */
-  //{ "w",    "Set watchpoint (e.g. w *0x2000)", cmd_w },
-  //{ "d",    "Delete watchpoint (e.g. d 2)", cmd_d },
+  { "w",    "Set watchpoint (e.g. w *0x2000)", cmd_w },
+  { "d",    "Delete watchpoint (e.g. d 2)", cmd_d },
   /* TODO: Add more commands */
 
 };
@@ -111,23 +111,31 @@ static int cmd_si(char *args) {
 }
 
 static int cmd_info(char *args) {
+  char c;
   if (args == NULL) {
-    printf("Please input the info r or info w\n");
+    printf("Invalid arguement.\n");
+    return 0;
   }
-  else {
-    if (strcmp(args, "r") == 0) {
-      printf("eax:  0x%-10x    %-10d\n", cpu.eax, cpu.eax);
-      printf("edx:  0x%-10x    %-10d\n", cpu.edx, cpu.edx);
-      printf("ecx:  0x%-10x    %-10d\n", cpu.ecx, cpu.ecx);
-      printf("ebx:  0x%-10x    %-10d\n", cpu.ebx, cpu.ebx);
-      printf("ebp:  0x%-10x    %-10d\n", cpu.ebp, cpu.ebp);
-      printf("esi:  0x%-10x    %-10d\n", cpu.esi, cpu.esi);
-      printf("esp:  0x%-10x    %-10d\n", cpu.esp, cpu.esp);
-      printf("eip:  0x%-10x    %-10d\n", cpu.eip, cpu.eip);
-    }
-    else {
-      printf("The info command need a parameter 'r' \n");
-    }
+  if (sscanf(args, "%c", &c) <= 0) {
+    printf("Invalid arguement.\n");
+    return 0;
+  }
+
+  if (c == 'r') {
+    // DWORD
+    for (int i=0; i<8; i++)
+      printf("%s   0x%x\n", regsl[i], reg_l(i));
+    printf("eip   0x%x\n", cpu.eip);
+    // WORD
+    for (int i=0; i<8; i++)
+      printf("%s    0x%x\n", regsw[i], reg_w(i));
+    // BYTE
+    for (int i=0; i<8; i++)
+      printf("%s    0x%x\n", regsb[i], reg_b(i));
+  } else if (c == 'w') {
+    print_wp();
+  } else {
+    printf("Invalid arguement.\n");
   }
   return 0;
 }
@@ -201,6 +209,24 @@ static int cmd_p(char *args) {
   return 0;
 }
 
+static int cmd_w(char *args) {
+  new_wp(args);
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  int num = 0;
+  if (sscanf(args, "%d", &num) <= 0) {
+    printf("Invalid argument.\n");
+    return 0;
+  }
+
+  if (free_wp(num))
+    printf("Successfully deleted watchpoint %d\n", num);
+  else
+    printf("Error: no watchpoint %d\n", num);
+  return 0;
+}
 
 void ui_mainloop(int is_batch_mode) {
   if (is_batch_mode) {
