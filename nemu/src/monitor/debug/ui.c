@@ -133,46 +133,52 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_x(char *args) {
-  if (args == NULL) {
-    printf("Usage: x <num> <hex_addr>\n");
-    return 0;
-  }
-
-  char *num_str = strtok(args, " ");
-  char *addr_str = strtok(NULL, " ");
-  
-  if (num_str == NULL || addr_str == NULL) {
-    printf("Invalid command! Usage: x <num> <hex_addr>\n");
-    return 0;
-  }
-
-  int num = atoi(num_str);  
-  int addr;
-
-  if (sscanf(addr_str, "%x", &addr) != 1) {
-    printf("Invalid address format! Use a hexadecimal number.\n");
-    return 0;
-  }
-
-  printf("Memory content at 0x%08x:\n", addr);
-
-  for (int i = 0; i < num; i++) {
-    if (i % 4 == 0) {
-      printf("0x%08x: ", addr);
+    if (!args) {
+        printf("args error in cmd_%s\n", "x");
+        return 0;
     }
-
-    uint32_t data = vaddr_read(addr, 4);
-    printf("0x%08x ", data);
-
-    addr += 4;
-
-    if (i % 4 == 3 || i == num - 1) {
-      printf("\n");
+    
+    char *args_end = args + strlen(args);
+    char *first_args = strtok(NULL, " ");
+    
+    if (!first_args) {
+        printf("args error in cmd_%s\n", "x");
+        return 0;
     }
-  }
-
-  return 0;
+    
+    char *exprs = first_args + strlen(first_args) + 1;
+    if (exprs >= args_end) {
+        printf("args error in cmd_%s\n", "x");
+        return 0;
+    }
+    
+    int n = atoi(first_args);
+    bool success;
+    vaddr_t addr = expr(exprs, &success);
+    
+    if (success == false) {
+        printf("error in expr()\n");
+        printf("Memory:\n");
+        return 0;
+    }
+    
+    for (int i = 0; i < n; i++) {
+        printf("0x%x:", addr);
+        uint32_t val = vaddr_read(addr, 4);
+        uint8_t *by = (uint8_t *)&val;
+        
+        printf("0x");
+        for (int j = 3; j >= 0; j--) {
+            printf("%02x", by[j]);
+        }
+        printf("\n");
+        
+        addr += 4;
+    }
+    
+    return 0;
 }
+
 
 static int cmd_p(char *args) {
   if (args == NULL) {
