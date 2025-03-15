@@ -39,7 +39,7 @@ static struct rule {
   {"\\|\\|", TK_OR},        // 逻辑或
   {"!", TK_NOT},            // 逻辑非
   {"\\*", TK_DEREF},        // 解引用操作符
-  {"\\$((eax|ecx|edx|ebx|esp|ebp|esi|edi|eip|ax|cx|dx|bx|sp|bp|si|di|al|cl|dl|bl|ah|ch|dh|bh))",TK_REG}, //寄存器
+  {"\\$(eax|ecx|edx|ebx|esp|ebp|esi|edi|eip|ax|cx|dx|bx|sp|bp|si|di|al|cl|dl|bl|ah|ch|dh|bh|)",TK_REG}, //寄存器
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -96,15 +96,16 @@ static bool make_token(char *e) {
 
                 switch (rules[i].token_type) {
                     case TK_NUM:
+                        strncpy(tokens[nr_token].str,substr_start,substr_len);
+                        *(tokens[nr_token].str+substr_len)='\0';
+                        break;
                     case TK_HEX:
+                        strncpy(tokens[nr_token].str,substr_start+2,substr_len-2);
+                        *(tokens[nr_token].str+substr_len-2)='\0';
+                        break;
                     case TK_REG:
-                        if (substr_len < sizeof(tokens[nr_token].str)) {
-                            strncpy(tokens[nr_token].str, substr_start, substr_len);
-                            tokens[nr_token].str[substr_len] = '\0';
-                        } else {
-                            printf("Error: Number token too long\n");
-                            return false;
-                        }
+                        strncpy(tokens[nr_token].str,substr_start+1,substr_len-1);
+                        *(tokens[nr_token].str+substr_len-1)='\0';
                         break;
                     default:
                         tokens[nr_token].str[0] = substr_start[0];
