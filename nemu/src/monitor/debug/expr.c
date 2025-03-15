@@ -38,8 +38,8 @@ static struct rule {
   {"\\|\\|", TK_OR},        // 逻辑或
   {"!", TK_NOT},            // 逻辑非
   {"\\*", TK_DEREF},        // 解引用操作符
-  {"0[xX][0-9a-fA-F]+", TK_HEX}, // 十六进制数
-  {"[a-zA-Z_][a-zA-Z0-9_]*", TK_REG} //寄存器
+  {"0x[0-9a-fA-F]+", TK_HEX}, // 十六进制数
+  {"\\$((eax|ecx|edx|ebx|esp|ebp|esi|edi|eip|ax|cx|dx|bx|sp|bp|si|di|al|cl|dl|bl|ah|ch|dh|bh))",TK_REG}, //寄存器
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
