@@ -142,50 +142,42 @@ static int cmd_info(char *args) {
 
 static int cmd_x(char *args) {
     if (!args) {
-        printf("args error in cmd_%s\n", "x");
+        printf("Error: Missing arguments. Usage: x <count> <expr>\n");
         return 0;
     }
-    
-    char *args_end = args + strlen(args);
-    char *first_args = strtok(NULL, " ");
-    
-    if (!first_args) {
-        printf("args error in cmd_%s\n", "x");
+
+    int count;
+    char expr_str[256];  // 存储表达式（内存地址）
+
+    // 使用 sscanf() 解析参数，确保 count 和 expr 都能正确获取
+    if (sscanf(args, "%d %255s", &count, expr_str) != 2 || count <= 0) {
+        printf("Error: Invalid arguments. Usage: x <count> <expr>\n");
         return 0;
     }
-    
-    char *exprs = first_args + strlen(first_args) + 1;
-    if (exprs >= args_end) {
-        printf("args error in cmd_%s\n", "x");
-        return 0;
-    }
-    
-    int n = atoi(first_args);
+
+    // 计算表达式，获取地址
     bool success;
-    vaddr_t addr = expr(exprs, &success);
-    
-    if (success == false) {
-        printf("error in expr()\n");
-        printf("Memory:\n");
+    vaddr_t addr = expr(expr_str, &success);
+    if (!success) {
+        printf("Error: Failed to evaluate expression.\n");
         return 0;
     }
-    
-    for (int i = 0; i < n; i++) {
-        printf("0x%x:", addr);
+
+    // 遍历读取 count 个 4 字节单位的内存数据
+    for (int i = 0; i < count; i++) {
         uint32_t val = vaddr_read(addr, 4);
-        uint8_t *by = (uint8_t *)&val;
-        
-        printf("0x");
-        for (int j = 3; j >= 0; j--) {
-            printf("%02x", by[j]);
-        }
-        printf("\n");
-        
-        addr += 4;
+        uint8_t *bytes = (uint8_t *)&val;
+
+        // 输出内存地址和数据（小端序）
+        printf("0x%08x: 0x%02x%02x%02x%02x\n", 
+               addr, bytes[3], bytes[2], bytes[1], bytes[0]);
+
+        addr += 4;  // 递增到下一个 4 字节单元
     }
-    
+
     return 0;
 }
+
 
 
 static int cmd_p(char *args) {
