@@ -57,17 +57,17 @@ static struct {
   { "si",   "Single-step execution [N instructions] (default N=1)", cmd_si },
   
   /* 打印程序状态 */
-  { "info", "Print program state (r/w)", cmd_info },
+  { "info", "Print program state", cmd_info },
   
   /* 表达式求值 */
-  { "p",    "Evaluate expression (e.g. p $eax+1)", cmd_p },
+  { "p",    "Evaluate expression", cmd_p },
   
   /* 扫描内存 */
-  { "x",    "Examine memory (e.g. x 10 $esp)", cmd_x },
+  { "x",    "Examine memory", cmd_x },
   
   /* 监视点操作 */
-  { "w",    "Set watchpoint (e.g. w *0x2000)", cmd_w },
-  { "d",    "Delete watchpoint (e.g. d 2)", cmd_d },
+  { "w",    "Set watchpoint", cmd_w },
+  { "d",    "Delete watchpoint", cmd_d },
   /* TODO: Add more commands */
 
 };
