@@ -91,7 +91,7 @@ void print_wp() {
     return;
   }
   printf("Watchpoints:\n");
-  printf("NO.   expr            hitTimes\n");
+  printf("NO.   expr            hit_num\n");
   current_wp = watchpoint_list;
   while (current_wp) {
     printf("%d     %s          %d\n", current_wp->NO, current_wp->expr, current_wp->hit_num);
@@ -111,7 +111,7 @@ bool watch_wp() {
     if (current_value != current_wp->old_value) {
       current_wp->hit_num += 1;
       printf("Hardware watchpoint %d:%s\n", current_wp->NO, current_wp->expr);
-      printf("Old value:%d\nNew value:%d\n\n", current_wp->old_value, current_value);
+      printf("Old_value:%d\nNew_value:%d\n\n", current_wp->old_value, current_value);
       current_wp->old_value = current_value;
       return false;
     }
