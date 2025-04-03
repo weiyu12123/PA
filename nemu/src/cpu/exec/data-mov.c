@@ -12,8 +12,8 @@ make_EHelper(push) {
 }
 
 make_EHelper(pop) {
-  rtl_pop(&id_dest->val);
-  operand_write(id_dest, &id_dest->val);
+  rtl_pop(&t2);
+  operand_write(id_dest, &t2);
 
   print_asm_template1(pop);
 }
@@ -50,18 +50,13 @@ make_EHelper(cltd) {
   print_asm(decoding.is_operand_size_16 ? "cwtl" : "cltd");
 }
 
-
 make_EHelper(cwtl) {
   if (decoding.is_operand_size_16) {
-    rtl_lr(&t0,0,1);
-	rtl_sext(&t2,&t0,1);
-	rtl_sr(0,2,&t0);
+    TODO();
   }
   else {
-    rtl_lr(&t0,0,2);
-	rtl_sext(&t2,&t0,2);
-	rtl_sr(0,4,&t0);
-   }
+    TODO();
+  }
 
   print_asm(decoding.is_operand_size_16 ? "cbtw" : "cwtl");
 }
@@ -84,4 +79,3 @@ make_EHelper(lea) {
   operand_write(id_dest, &t2);
   print_asm_template2(lea);
 }
-
