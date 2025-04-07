@@ -54,6 +54,7 @@ make_EHelper(in) {
   diff_test_skip_qemu();
 #endif
 }
+
 make_EHelper(out) {
   pio_write(id_dest->val, id_src->width, id_src->val);
 
