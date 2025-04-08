@@ -20,8 +20,6 @@ static unsigned int ans;
 
 void bench_queen_prepare() {
   ans = 0;
-  printf("[DEBUG] setting->size = %d\n", setting->size);
-
   FULL = (1 << setting->size) - 1;
 }
 
