@@ -129,7 +129,7 @@ static inline void rtl_mv(rtlreg_t* dest, const rtlreg_t *src1) {
   rtl_addi(dest, src1, 0);
 }
 
-void rtl_not(rtlreg_t* dest) {
+static inline void rtl_not(rtlreg_t* dest) {
   // dest <- ~dest
   rtl_xori(dest, dest, 0xFFFFFFFF);
 }
