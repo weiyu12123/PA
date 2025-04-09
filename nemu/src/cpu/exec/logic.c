@@ -43,7 +43,7 @@ make_EHelper(or) {
 }
 
 make_EHelper(sar) {
-  // unnecessary to update CF and OF in NEMU
+  
   rtl_sext(&t2, &id_dest->val, id_dest->width);
   rtl_sar(&t2, &t2, &id_src->val);
   operand_write(id_dest, &t2);
@@ -53,7 +53,7 @@ make_EHelper(sar) {
 }
 
 make_EHelper(shl) {
-  // unnecessary to update CF and OF in NEMU
+
   rtl_shl(&t2, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t2);
   rtl_update_ZFSF(&t2, id_dest->width);
@@ -62,7 +62,7 @@ make_EHelper(shl) {
 }
 
 make_EHelper(shr) {
-  // unnecessary to update CF and OF in NEMU
+  
   rtl_shr(&t2, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t2);
   rtl_update_ZFSF(&t2, id_dest->width);
