@@ -9,16 +9,15 @@ void sys_exit(int a){
   _halt(a);
 }
 
-int sys_write(int fd, void *buf, size_t len) {
-	if(fd == 1 || fd == 2){
-		char c;
-		for(int i = 0; i < len; i++) {
-			memcpy(&c ,buf + i, 1);
-			_putc(c);
-		}
-		return len;
-	}
-	return -1;			
+uintptr_t sys_write(int fd, const void *buf, size_t count){
+    uintptr_t i=0;
+    if (fd==1||fd==2) {
+        for (;count>0;count--) {
+            _putc(((char*)buf)[i]);
+            i++;
+        }
+    }
+    return -1;
 }
 
 _RegSet* do_syscall(_RegSet *r) {
