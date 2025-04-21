@@ -12,6 +12,8 @@ void sys_exit(int a){
 int sys_write(int fd, void *buf, size_t len) {
 	if(fd == 1 || fd == 2){
     Log("buffer:%s", (char*)buf);
+    Log("sys_write: fd=%d, len=%d, buffer:%s", fd, len, (char*)buf);
+
 		for(int i = 0; i < len; i++) {
 			_putc(((char*) buf)[i]);
 		}
