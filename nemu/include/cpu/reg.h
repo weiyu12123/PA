@@ -47,6 +47,17 @@ typedef struct {
     unsigned int :1;
   } eflags;
 
+    struct IDTR
+  {
+    uint32_t base;
+    uint16_t limit; 
+  } idtr;
+
+    
+  rtlreg_t cs;
+  rtlreg_t es; // 配x64
+  rtlreg_t ds;
+
 } CPU_state;
 
 
