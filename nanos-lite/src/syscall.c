@@ -10,25 +10,17 @@ void sys_exit(int a){
 }
 
 int sys_write(int fd, void *buf, size_t len) {
-  if (fd == 1 || fd == 2) {
-    // 日志输出：显示第一次调用 sys_write 的信息
-    char logbuf[128];
-    int l = sprintf(logbuf, "[sys_write] fd=%d, len=%zu, first char='%c'\n", fd, len, ((char *)buf)[0]);
-    
-    // 使用 _putc 输出日志
-    for (int i = 0; i < l; i++) {
-      _putc(logbuf[i]);
-    }
+	if(fd == 1 || fd == 2){
+		char c;
+    Log("buffer:%s", (char*)buf);
+		for(int i = 0; i < len; i++) {
+			memcpy(&c ,buf + i, 1);
+			_putc(c);
+		}
+		return len;
+	}
 
-    // 原始输出逻辑，逐字符输出
-    for (int i = 0; i < len; i++) {
-      _putc(((char *)buf)[i]);
-    }
-
-    return len;
-  }
-
-  return -1;
+	return -1;			
 }
 
 int sys_brk(int addr) {
