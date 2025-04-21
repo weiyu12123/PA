@@ -10,15 +10,18 @@ void sys_exit(int a){
 }
 
 uintptr_t sys_write(int fd, const void *buf, size_t count){
-    uintptr_t i=0;
-    if (fd==1||fd==2) {
-        for (;count>0;count--) {
-            _putc(((char*)buf)[i]);
-            i++;
-        }
+  uintptr_t i = 0;
+
+  if (fd == 1 || fd == 2) { // stdout or stderr
+    for (; i < count; i++) {
+      _putc(((char *)buf)[i]); // _putc 是 AM 提供的字符输出函数
     }
-    return -1;
+    return count; // 成功写入的字节数
+  }
+
+  return -1; // 对于不支持的 fd，返回错误
 }
+
 
 _RegSet* do_syscall(_RegSet *r) {
   uintptr_t a[4];
