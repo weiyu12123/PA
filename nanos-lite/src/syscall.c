@@ -9,17 +9,17 @@ void sys_exit(int a){
   _halt(a);
 }
 
-uintptr_t sys_write(int fd, const void *buf, size_t count){
-  uintptr_t i = 0;
+int sys_write(int fd, void *buf, size_t len) {
+	if(fd == 1 || fd == 2){
+		char c;
+		for(int i = 0; i < len; i++) {
+			memcpy(&c ,buf + i, 1);
+			_putc(c);
+		}
+		return len;
+	}
 
-  if (fd == 1 || fd == 2) { // stdout or stderr
-    for (; i < count; i++) {
-      _putc(((char *)buf)[i]); // _putc 是 AM 提供的字符输出函数
-    }
-    return count; // 成功写入的字节数
-  }
-
-  return -1; // 对于不支持的 fd，返回错误
+	return -1;			
 }
 
 
