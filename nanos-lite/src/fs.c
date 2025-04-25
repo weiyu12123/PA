@@ -32,7 +32,6 @@ void init_fs() {
 
 
 size_t fs_fliesz(int fd) {
-  assert(fd >= 0 && fd < NR_FILES);
   return file_table[fd].size;
 }
 
