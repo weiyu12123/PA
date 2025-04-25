@@ -25,7 +25,6 @@ size_t events_read(void *buf, size_t len) {
     strncpy((char*)buf, str, strlen(str));
     return strlen(str);
   }
-  Log("strlen(event)>len,return 0");
   return 0;
 }
 
