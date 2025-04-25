@@ -9,7 +9,6 @@ extern uint8_t ramdisk_end;
 extern void ramdisk_read(void *buf, off_t offset, size_t len);
 
 uintptr_t loader(_Protect *as, const char *filename) {
-  Log("filename=%s, fd=%d", filename);
   int fd = fs_open(filename, 0, 0);
   Log("filename=%s, fd=%d", filename, fd);
   fs_read(fd, DEFAULT_ENTRY, fs_filesz(fd));
