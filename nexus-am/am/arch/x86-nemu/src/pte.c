@@ -67,17 +67,21 @@ void _switch(_Protect *p) {
 }
 
 void _map(_Protect *p, void *va, void *pa) {
-  PDE *pgdir = p->ptr;
-  PDE *pde;
-  PTE *ptdir;
-  pde = &(pgdir[PDX(va)]);
-  if (*pde & PTE_P) {
-    ptdir = (PTE*)PTE_ADDR(*pde);
-  } else {
-    ptdir = (PDE*)palloc_f();
-    *pde = PTE_ADDR(ptdir) | PTE_P;
-  }
-  ptdir[PTX(va)] = PTE_ADDR(pa) | PTE_P;
+    if (OFF(va) || OFF(pa)) {
+        // printf("page not aligned\n");
+        return;
+    }
+
+    PDE *dir = (PDE*) p->ptr; // page directory
+    PTE *table = NULL;
+    PDE *pde = dir + PDX(va); // page directory entry
+    if (!(*pde & PTE_P)) { // page directory entry not exist
+        table = (PTE*) (palloc_f());
+        *pde = (uintptr_t) table | PTE_P;
+    }
+    table = (PTE*) PTE_ADDR(*pde); // page table
+    PTE *pte = table + PTX(va); // page table entry
+    *pte = (uintptr_t) pa | PTE_P;
 }
 
 void _unmap(_Protect *p, void *va) {
