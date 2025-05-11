@@ -4,12 +4,10 @@
 
 #define PMEM_SIZE (128 * 1024 * 1024)
 
-#define PTXSHFT 12 
-#define PDXSHFT 22 
-#define PTE_ADDR(pte) ((uint32_t)(pte) & ~0xfff)
-#define PDX(va) (((uint32_t)(va) >> PDXSHFT) & 0x3ff)
-#define PTX(va) (((uint32_t)(va) >> PTXSHFT) & 0x3ff)
-#define OFF(va) ((uint32_t)(va) & 0xfff)
+#define PTE_ADDR(pte)    ((uint32_t)(pte) & ~0xfff)
+#define PDX(va)         (((uint32_t)(va) >> 22) & 0x3ff)
+#define PTX(va)         (((uint32_t)(va) >> 12) & 0x3ff)
+#define OFF(va)         ((uint32_t)(va) & 0xfff)
 
 paddr_t page_translate(vaddr_t addr,bool iswrite);
 
@@ -40,7 +38,7 @@ void paddr_write(paddr_t addr, int len, uint32_t data) {
 
 uint32_t vaddr_read(vaddr_t addr, int len) {
     if (PTE_ADDR(addr) != PTE_ADDR(addr + len - 1)) {
-        printf("error: the data pass two pages: addr = 0x%x, len = %d!\n", addr, len);
+        printf("error: the data pass two pages:addr=0x%x, len=%d!\n", addr, len);
         assert(0);
     } else {
         paddr_t paddr = page_translate(addr, false);
@@ -50,7 +48,7 @@ uint32_t vaddr_read(vaddr_t addr, int len) {
 
 void vaddr_write(vaddr_t addr, int len, uint32_t data) {
     if (PTE_ADDR(addr) != PTE_ADDR(addr + len - 1)) {
-        printf("error: the data pass two pages: addr = 0x%x, len = %d!\n", addr, len);
+        printf("error: the data pass two pages:addr=0x%x, len=%d!\n", addr, len);
         assert(0);
     } else {
         paddr_t paddr = page_translate(addr, true);
