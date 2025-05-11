@@ -74,6 +74,8 @@ extern DecodeInfo decoding;
 #define make_DHelper(name) void concat(decode_, name) (vaddr_t *eip)
 typedef void (*DHelper) (vaddr_t *);
 
+make_DHelper(mov_load_cr);
+make_DHelper(mov_store_cr);
 make_DHelper(I2E);
 make_DHelper(I2a);
 make_DHelper(I2r);

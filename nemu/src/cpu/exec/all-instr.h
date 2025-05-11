@@ -21,6 +21,7 @@ make_EHelper(cwtl);
 make_EHelper(movsx);
 make_EHelper(movzx);
 make_EHelper(lea);
+make_EHelper(mov_store_cr);
 
 // control.c
 make_EHelper(jmp);
