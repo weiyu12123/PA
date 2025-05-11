@@ -8,21 +8,29 @@ void vecnull();
 void vecself();
 
 _RegSet* irq_handle(_RegSet *tf) {
-  _RegSet *next = tf;
-  if (H) {
-    _Event ev;
-    switch (tf->irq) {
-      case 0x80: ev.event = _EVENT_SYSCALL; break;
-      default: ev.event = _EVENT_ERROR; break;
+    _RegSet *next = tf;
+    if (H) {
+        _Event ev;
+        switch (tf->irq) {
+            case 0x80:
+                ev.event = _EVENT_SYSCALL;
+                break;
+            case 0x81:
+                ev.event = _EVENT_TRAP;
+                break;
+            case 32:
+                ev.event = _EVENT_IRQ_TIME;
+                break;
+            default:
+                ev.event = _EVENT_ERROR;
+                break;
+        }
+        next = H(ev, tf);
+        if (next == NULL) {
+            next = tf;
+        }
     }
-
-    next = H(ev, tf);
-    if (next == NULL) {
-      next = tf;
-    }
-  }
-
-  return next;
+    return next;
 }
 
 static GateDesc idt[NR_IRQ];
