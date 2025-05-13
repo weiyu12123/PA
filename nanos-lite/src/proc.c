@@ -36,14 +36,14 @@ _RegSet* schedule(_RegSet *prev) {
     if(current!=NULL)
         current->tf=prev;
     else
-        current=&pcb[0];
+        current=&pcb[current_game];
 
     static int num=0;
     static const int frequency=1000;
-    if(current==&pcb[0])
+    if(current==&pcb[current_game])
         num++;
     else
-        current=&pcb[0];
+        current=&pcb[current_game];
 
     if(num==frequency){
         current=&pcb[1];
