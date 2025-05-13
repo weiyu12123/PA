@@ -36,18 +36,14 @@ size_t fs_fliesz(int fd) {
 }
 
 off_t disk_offset(int fd){
-	assert(fd >= 0 && fd < NR_FILES);
 	return file_table[fd].disk_offset;
 }
 
 off_t get_open_offset(int fd){
-	assert(fd >= 0 && fd < NR_FILES);
 	return file_table[fd].open_offset;
 }
 
 void set_open_offset(int fd,off_t n){
-	assert(fd >= 0 && fd < NR_FILES);
-	assert(n >= 0);
 	if(n > file_table[fd].size) {
 		n = file_table[fd].size;
 	}
@@ -71,7 +67,6 @@ int fs_open(const char*filename, int flags, int mode) {
 
 extern void fb_write(const void *buf, off_t offset, size_t len);
 ssize_t fs_write(int fd, void *buf, size_t len){
-  assert(fd >= 0 && fd < NR_FILES);
   if(fd < 3 || fd == FD_DISPINFO) {
     Log("arg invalid:fd<3");
     return 0;
@@ -93,7 +88,6 @@ ssize_t fs_write(int fd, void *buf, size_t len){
 void dispinfo_read(void *buf, off_t offset, size_t len);
 extern size_t events_read(void *buf, size_t len);
 ssize_t fs_read(int fd, void *buf, size_t len){
-  assert(fd >= 0 && fd < NR_FILES);
   if(fd < 3 || fd == FD_FB) {
     Log("arg invalid:fd<3");
     return 0;
@@ -117,11 +111,11 @@ ssize_t fs_read(int fd, void *buf, size_t len){
 
 int fs_close(int fd) {
   assert(fd >= 0 && fd < NR_FILES);
+  file_table[fd].open_offset = 0;
   return 0;
 }
 
 size_t fs_filesz(int fd) {
-  assert(fd >= 0 && fd < NR_FILES);
   return file_table[fd].size;
 }
 
