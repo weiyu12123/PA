@@ -6,6 +6,12 @@ static PCB pcb[MAX_NR_PROC];
 static int nr_proc = 0;
 PCB *current = NULL;
 
+int current_game = 0;
+void switch_current_game() {
+    current_game = 2 - current_game;
+    Log("current_game = %d", current_game);
+}
+
 uintptr_t loader(_Protect *as, const char *filename);
 
 void load_prog(const char *filename) {
