@@ -3,13 +3,32 @@
 #include <assert.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-  assert(0);
-  return 0;
+    assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
+                   ((int64_t) a * (int64_t) b) >> 16 < ((int64_t)1 << 32));
+    return ((int64_t) a * (int64_t) b) >> 16;
 }
 
+
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  assert(0);
-  return 0;
+    int op = 1;
+    if(a < 0) {
+        op = -op;
+        a = -a;
+    }
+    if(b < 0) {
+        op = -op;
+        b = -b;
+    }
+    int ret = a / b;
+    a %= b;
+    int i;
+    for (i = 0;i < 16;i ++){
+        a <<= 1;
+        ret <<= 1;
+        if (a >= b) a -= b, ret |= 1;
+    }
+    return op * ret;
+
 }
 
 FLOAT f2F(float a) {
@@ -22,17 +41,35 @@ FLOAT f2F(float a) {
    * stack. How do you retrieve it to another variable without
    * performing arithmetic operations on it directly?
    */
+  union float_ {
+    struct {
+      uint32_t m : 23;
+      uint32_t e : 8;
+      uint32_t signal : 1;
+    };
+    uint32_t value;
+  };
+  union float_ f;
+  f.value = *((uint32_t*)(void*)&a);
 
-  assert(0);
-  return 0;
-}
+  int e = f.e - 127;
 
-FLOAT Fabs(FLOAT a) {
-  assert(0);
-  return 0;
+  FLOAT result;
+  if (e <= 7) {
+    result = (f.m | (1 << 23)) >> 7 - e;
+  }
+  else {
+    result = (f.m | (1 << 23)) << (e - 7);
+  }
+  return f.signal == 0 ? result : (result|(1<<31));
 }
 
 /* Functions below are already implemented */
+
+FLOAT Fabs(FLOAT a)
+{
+  return (a > 0) ? a : -a;
+}
 
 FLOAT Fsqrt(FLOAT x) {
   FLOAT dt, t = int2F(2);
