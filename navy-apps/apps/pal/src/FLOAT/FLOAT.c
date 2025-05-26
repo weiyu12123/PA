@@ -1,6 +1,7 @@
 #include "FLOAT.h"
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
     assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
