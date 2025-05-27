@@ -4,9 +4,7 @@
 #include <string.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-    assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
-                   ((int64_t) a * (int64_t) b) >> 16 < ((int64_t)1 << 32));
-    return ((int64_t) a * (int64_t) b) >> 16;
+  return (a * b) >> 16;
 }
 
 // FLOAT F_div_F(FLOAT a, FLOAT b) {
@@ -30,26 +28,24 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 // }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-    int op = 1;
-    if(a < 0) {
-        op = -op;
-        a = -a;
+    FLOAT result = Fabs(a) / Fabs(b);
+    FLOAT m = Fabs(a);
+    FLOAT n = Fabs(b);
+    m = m % n;
+    for (int i = 0; i < 16; i++) {
+        m <<= 1;
+        result <<= 1;
+        if (m >= n) {
+            m -= n;
+            result++;
+        }
     }
-    if(b < 0) {
-        op = -op;
-        b = -b;
+    if (((a ^ b) & 0x80000000) == 0x80000000) {
+        result = -result;
     }
-    int ret = a / b;
-    a %= b;
-    int i;
-    for (i = 0;i < 16;i ++){
-        a <<= 1;
-        ret <<= 1;
-        if (a >= b) a -= b, ret |= 1;
-    }
-    return op * ret;
-
+    return result;
 }
+
 
 FLOAT f2F(float a) {
   /* You should figure out how to convert `a' into FLOAT without
@@ -69,20 +65,22 @@ FLOAT f2F(float a) {
     };
     uint32_t value;
   };
+  
   union float_ f;
   f.value = *((uint32_t*)(void*)&a);
 
   int e = f.e - 127;
-
   FLOAT result;
+  
   if (e <= 7) {
-    result = (f.m | (1 << 23)) >> 7 - e;
-  }
-  else {
+    result = (f.m | (1 << 23)) >> (7 - e);
+  } else {
     result = (f.m | (1 << 23)) << (e - 7);
   }
-  return f.signal == 0 ? result : (result|(1<<31));
+
+  return f.signal == 0 ? result : (result | (1 << 31));
 }
+
 
 /* Functions below are already implemented */
 FLOAT Fabs(FLOAT a)
@@ -96,7 +94,7 @@ FLOAT Fsqrt(FLOAT x) {
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
-  } while(Fabs(dt) > f2F(1e-3));
+  } while(Fabs(dt) > f2F(1e-4));
   return t;
 }
 
@@ -108,6 +106,6 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
     t2 = F_mul_F(t, t);
     dt = (F_div_F(x, t2) - t) / 3;
     t += dt;
-  } while(Fabs(dt) > f2F(1e-3));
+  } while(Fabs(dt) > f2F(1e-4));
   return t;
 }
