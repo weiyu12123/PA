@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+#include <common.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
     assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
@@ -12,25 +13,31 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
     int op = 1;
-    if(a < 0) {
+    if (a < 0) {
         op = -op;
         a = -a;
     }
-    if(b < 0) {
+    if (b < 0) {
         op = -op;
         b = -b;
     }
     int ret = a / b;
     a %= b;
+
     int i;
-    for (i = 0;i < 16;i ++){
+    for (i = 0; i < 16; i++) {
         a <<= 1;
         ret <<= 1;
-        if (a >= b) a -= b, ret |= 1;
+        if (a >= b) {
+            a -= b;
+            ret |= 1;
+        }
+        printf("[F_div_F] Step %d: ret = %d, a = %d\n", i + 1, ret, a);
     }
-    return op * ret;
 
+    return op * ret;
 }
+
 
 FLOAT f2F(float a) {
   /* You should figure out how to convert `a' into FLOAT without
@@ -62,7 +69,7 @@ FLOAT f2F(float a) {
   else {
     result = (f.m | (1 << 23)) << (e - 7);
   }
-  return f.signal == 0 ? result : (result|(1<<31));
+  return f.signal == 0 ? result : -result;
 }
 
 /* Functions below are already implemented */
@@ -72,7 +79,7 @@ FLOAT Fabs(FLOAT a)
   return (a > 0) ? a : -a;
 }
 
-FLOAT Fsqrt(FLOAT x) {
+/*FLOAT Fsqrt(FLOAT x) {
   FLOAT dt, t = int2F(2);
 
   do {
@@ -81,10 +88,29 @@ FLOAT Fsqrt(FLOAT x) {
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
+}*/
+
+FLOAT Fsqrt(FLOAT x) {
+  FLOAT dt, t = int2F(2);
+  int cnt = 0;
+
+  do {
+    dt = F_div_int((F_div_F(x, t) - t), 2);
+    t += dt;
+    cnt++;
+    printf("[Fsqrt] Iter %d: t = %d, dt = %d\n", cnt, t, dt);
+    if (cnt > 50) {
+      printf("[Fsqrt] Reached max iterations!\n");
+      break;
+    }
+  } while(Fabs(dt) > f2F(1e-4));
+
+  return t;
 }
 
-FLOAT Fpow(FLOAT x, FLOAT y) {
-  /* we only compute x^0.333 */
+
+/*FLOAT Fpow(FLOAT x, FLOAT y) {
+  /* we only compute x^0.333 
   FLOAT t2, dt, t = int2F(2);
 
   do {
@@ -94,4 +120,22 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
+}*/
+
+FLOAT Fpow(FLOAT x, FLOAT y) {
+  FLOAT t2, dt, t = int2F(2);
+  int cnt = 0;
+
+  do {
+    t2 = F_mul_F(t, t);
+    dt = (F_div_F(x, t2) - t) / 3;
+    t += dt;
+    cnt++;
+    if (cnt > 50) break; // 最多迭代50次
+  } while(Fabs(dt) > f2F(1e-4));
+
+  return t;
 }
+
+
+
