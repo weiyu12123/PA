@@ -4,7 +4,9 @@
 #include <string.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-  return (a * b) >> 16;
+    assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
+                   ((int64_t) a * (int64_t) b) >> 16 < ((int64_t)1 << 32));
+    return ((int64_t) a * (int64_t) b) >> 16;
 }
 
 // FLOAT F_div_F(FLOAT a, FLOAT b) {
@@ -49,7 +51,6 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
 
 }
 
-
 FLOAT f2F(float a) {
   /* You should figure out how to convert `a' into FLOAT without
    * introducing x87 floating point instructions. Else you can
@@ -82,7 +83,6 @@ FLOAT f2F(float a) {
   }
   return f.signal == 0 ? result : (result|(1<<31));
 }
-
 
 /* Functions below are already implemented */
 FLOAT Fabs(FLOAT a)
