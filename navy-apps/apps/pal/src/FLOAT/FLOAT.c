@@ -79,63 +79,31 @@ FLOAT Fabs(FLOAT a)
   return (a > 0) ? a : -a;
 }
 
-/*FLOAT Fsqrt(FLOAT x) {
-  FLOAT dt, t = int2F(2);
-
-  do {
-    dt = F_div_int((F_div_F(x, t) - t), 2);
-    t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
-
-  return t;
-}*/
-
 FLOAT Fsqrt(FLOAT x) {
   FLOAT dt, t = int2F(2);
-  int cnt = 0;
 
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
-    cnt++;
-    printf("[Fsqrt] Iter %d: t = %d, dt = %d\n", cnt, t, dt);
-    if (cnt > 50) {
-      printf("[Fsqrt] Reached max iterations!\n");
-      break;
-    }
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
 }
 
-
-/*FLOAT Fpow(FLOAT x, FLOAT y) {
-  /* we only compute x^0.333 
-  FLOAT t2, dt, t = int2F(2);
-
-  do {
-    t2 = F_mul_F(t, t);
-    dt = (F_div_F(x, t2) - t) / 3;
-    t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
-
-  return t;
-}*/
 
 FLOAT Fpow(FLOAT x, FLOAT y) {
+  /* we only compute x^0.333 */
   FLOAT t2, dt, t = int2F(2);
-  int cnt = 0;
 
   do {
     t2 = F_mul_F(t, t);
     dt = (F_div_F(x, t2) - t) / 3;
     t += dt;
-    cnt++;
-    if (cnt > 50) break; // 最多迭代50次
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
 }
+
 
 
 
