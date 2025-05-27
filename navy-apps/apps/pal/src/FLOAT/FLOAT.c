@@ -42,35 +42,34 @@ FLOAT f2F(float a) {
    * stack. How do you retrieve it to another variable without
    * performing arithmetic operations on it directly?
    */
-  union float_ {
-    struct {
-      uint32_t m : 23;
-      uint32_t e : 8;
-      uint32_t signal : 1;
-    };
-    uint32_t value;
-  };
-  union float_ f;
-  f.value = *((uint32_t*)(void*)&a);
+  union {
+    float f;
+    uint32_t i;
+  } u;
+  u.f = a;
 
-  int e = f.e - 127;
+  uint32_t sign = u.i >> 31;
+  int32_t exp = ((u.i >> 23) & 0xff) - 127;
+  uint32_t frac = (u.i & 0x7fffff) | 0x800000; // 1.xxx in IEEE754
 
-  FLOAT result;
-  if (e <= 7) {
-    result = (f.m | (1 << 23)) >> 7 - e;
+  int32_t result;
+  if (exp >= 7) {
+    result = frac << (exp - 7);
+  } else if (exp >= -16) {
+    result = frac >> (7 - exp);
+  } else {
+    result = 0;  // underflow
   }
-  else {
-    result = (f.m | (1 << 23)) << (e - 7);
-  }
-  return f.signal == 0 ? result : (result|(1<<31));
+
+  return sign ? -result : result;
 }
 
 /* Functions below are already implemented */
 
-FLOAT Fabs(FLOAT a)
-{
+FLOAT Fabs(FLOAT a) {
   return (a > 0) ? a : -a;
 }
+
 
 FLOAT Fsqrt(FLOAT x) {
   FLOAT dt, t = int2F(2);
