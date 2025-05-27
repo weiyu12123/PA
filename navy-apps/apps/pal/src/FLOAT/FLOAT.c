@@ -51,7 +51,7 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
 
 }
 
-/*FLOAT f2F(float a) {
+FLOAT f2F(float a) {
   /* You should figure out how to convert `a' into FLOAT without
    * introducing x87 floating point instructions. Else you can
    * not run this code in NEMU before implementing x87 floating
@@ -60,7 +60,7 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
    * Hint: The bit representation of `a' is already on the
    * stack. How do you retrieve it to another variable without
    * performing arithmetic operations on it directly?
-   *
+   */
   union float_ {
     struct {
       uint32_t m : 23;
@@ -82,28 +82,6 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
     result = (f.m | (1 << 23)) << (e - 7);
   }
   return f.signal == 0 ? result : (result|(1<<31));
-}*/
-FLOAT f2F(float a) {
-  union {
-    float    f;
-    uint32_t u;
-  } u = { .f = a };
-
-  int     sign = (u.u >> 31) & 1;
-  int     exp  = ((u.u >> 23) & 0xFF) - 127;
-  uint32_t mant = (u.u & 0x7FFFFF) | (1 << 23);  // 恢复隐含的 1
-
-  int64_t val;
-  if (exp >= 0) {
-    // 注意这里要先计算 (exp - 7)，再整体左移
-    val = (int64_t)mant << (exp - 7);
-  } else {
-    // 先计算 (7 - exp)，再整体右移
-    val = (int64_t)mant >> (7 - exp);
-  }
-
-  // 最后根据符号位返回正/负
-  return sign ? (FLOAT)(-val) : (FLOAT)val;
 }
 
 /* Functions below are already implemented */
