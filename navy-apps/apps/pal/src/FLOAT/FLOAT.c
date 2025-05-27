@@ -28,22 +28,25 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 // }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-    FLOAT result = Fabs(a) / Fabs(b);
-    FLOAT m = Fabs(a);
-    FLOAT n = Fabs(b);
-    m = m % n;
-    for (int i = 0; i < 16; i++) {
-        m <<= 1;
-        result <<= 1;
-        if (m >= n) {
-            m -= n;
-            result++;
-        }
+    int op = 1;
+    if(a < 0) {
+        op = -op;
+        a = -a;
     }
-    if (((a ^ b) & 0x80000000) == 0x80000000) {
-        result = -result;
+    if(b < 0) {
+        op = -op;
+        b = -b;
     }
-    return result;
+    int ret = a / b;
+    a %= b;
+    int i;
+    for (i = 0;i < 16;i ++){
+        a <<= 1;
+        ret <<= 1;
+        if (a >= b) a -= b, ret |= 1;
+    }
+    return op * ret;
+
 }
 
 
