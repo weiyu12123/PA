@@ -96,7 +96,7 @@ FLOAT Fsqrt(FLOAT x) {
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
+  } while(Fabs(dt) > f2F(1e-3));
   return t;
 }
 
@@ -108,6 +108,6 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
     t2 = F_mul_F(t, t);
     dt = (F_div_F(x, t2) - t) / 3;
     t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
+  } while(Fabs(dt) > f2F(1e-3));
   return t;
 }
