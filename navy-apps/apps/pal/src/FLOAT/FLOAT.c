@@ -68,20 +68,19 @@ FLOAT f2F(float a) {
     };
     uint32_t value;
   };
-  
   union float_ f;
   f.value = *((uint32_t*)(void*)&a);
 
   int e = f.e - 127;
+
   FLOAT result;
-  
   if (e <= 7) {
-    result = (f.m | (1 << 23)) >> (7 - e);
-  } else {
+    result = (f.m | (1 << 23)) >> 7 - e;
+  }
+  else {
     result = (f.m | (1 << 23)) << (e - 7);
   }
-
-  return f.signal == 0 ? result : (result | (1 << 31));
+  return f.signal == 0 ? result : (result|(1<<31));
 }
 
 
