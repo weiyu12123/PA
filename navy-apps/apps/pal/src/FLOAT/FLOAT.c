@@ -81,29 +81,41 @@ FLOAT Fabs(FLOAT a)
 
 FLOAT Fsqrt(FLOAT x) {
   FLOAT dt, t = int2F(2);
+  int iter = 0;
 
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
+
+
+    iter++;
+
+    if (iter > 1000) {
+      printf("[Fsqrt] warning: iteration limit exceeded\n");
+      break;
+    }
+  } while (Fabs(dt) > f2F(1e-4));
 
   return t;
 }
-
 
 FLOAT Fpow(FLOAT x, FLOAT y) {
   /* we only compute x^0.333 */
   FLOAT t2, dt, t = int2F(2);
+  int iter = 0;
 
   do {
     t2 = F_mul_F(t, t);
-    dt = (F_div_F(x, t2) - t) / 3;
+    dt = F_div_int((F_div_F(x, t2) - t), 3);
     t += dt;
-  } while(Fabs(dt) > f2F(1e-4));
+
+    iter++;
+
+    if (iter > 1000) {
+      printf("[Fpow] warning: iteration limit exceeded\n");
+      break;
+    }
+  } while (Fabs(dt) > f2F(1e-4));
 
   return t;
 }
-
-
-
-
