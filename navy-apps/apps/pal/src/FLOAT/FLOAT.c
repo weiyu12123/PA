@@ -4,61 +4,12 @@
 #include <string.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-    /*assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
-                   ((int64_t) a * (int64_t) b) >> 16 < ((int64_t)1 << 32));*/
+    assert(-((int64_t)1 << 32) < ((int64_t) a * (int64_t) b) >> 16 &&
+                   ((int64_t) a * (int64_t) b) >> 16 < ((int64_t)1 << 32));
     return ((int64_t) a * (int64_t) b) >> 16;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  printf("F_div_F called: a = %d, b = %d\n", a, b);
-
-  FLOAT result = Fabs(a) / Fabs(b);
-  FLOAT m = Fabs(a);
-  FLOAT n = Fabs(b);
-  m = m % n;
-
-  for (int i = 0; i < 16; i++) {
-    m <<= 1;
-    result <<= 1;
-    if (m >= n) {
-      m -= n;
-      result++;
-    }
-    printf("F_div_F iteration %d: m = %d, result = %d\n", i, m, result);
-  }
-
-  if (((a ^ b) & 0x80000000) == 0x80000000) {
-    result = -result;
-  }
-
-  printf("F_div_F return: result = %d\n", result);
-  return result;
-}
-
-/*FLOAT F_div_F(FLOAT a, FLOAT b) {
-  FLOAT result = Fabs(a) / Fabs(b);
-  FLOAT m = Fabs(a);
-  FLOAT n = Fabs(b);
-  m = m % n;
-
-  for (int i = 0; i < 16; i++) {
-    m <<= 1;
-    result <<= 1;
-    if (m >= n) {
-      m -= n;
-      result++;
-    }
-  }
-
-  if (((a ^ b) & 0x80000000) == 0x80000000) {
-    result = -result;
-  }
-
-  return result;
-}*/
-
-
-/*FLOAT F_div_F(FLOAT a, FLOAT b) {
     int op = 1;
     if(a < 0) {
         op = -op;
@@ -78,7 +29,7 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
     }
     return op * ret;
 
-}*/
+}
 
 FLOAT f2F(float a) {
   /* You should figure out how to convert `a' into FLOAT without
@@ -120,25 +71,22 @@ FLOAT Fabs(FLOAT a)
 }
 
 FLOAT Fsqrt(FLOAT x) {
-  printf("Fsqrt called: x = %d\n", x);
-
+  
   FLOAT dt, t = int2F(2);
   int iter = 0;
 
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
-    printf("Fsqrt iteration %d: t = %d, dt = %d\n", iter++, t, dt);
+    
   } while(Fabs(dt) > f2F(1e-4));
 
-  printf("Fsqrt return: result = %d\n", t);
   return t;
 }
 
 
 FLOAT Fpow(FLOAT x, FLOAT y) {
-  printf("Fpow called: x = %d\n", x);
-
+  
   FLOAT t2, dt, t = int2F(2);
   int iter = 0;
 
@@ -146,9 +94,8 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
     t2 = F_mul_F(t, t);
     dt = (F_div_F(x, t2) - t) / 3;
     t += dt;
-    printf("Fpow iteration %d: t = %d, dt = %d\n", iter++, t, dt);
+    
   } while(Fabs(dt) > f2F(1e-4));
 
-  printf("Fpow return: result = %d\n", t);
   return t;
 }
